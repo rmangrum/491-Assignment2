@@ -74,20 +74,26 @@ function collision(a, b) {
 
 function shoot(attacker, defender) {
     var hit = false;
-    if ((attacker.rangeAtk - defender.defense) * 0.1 + Math.random() > 0.4) {
+    if ((attacker.stats.rangeAtk - defender.stats.defense) * 0.1 + Math.random() > 0.5) {
         hit = true;
-        if (attacker.rangeDmg > defender.armor) defender.hitPoints -= attacker.rangeDmg - defender.armor;
+        if (attacker.stats.rangeDmg > defender.stats.armor) {
+            defender.hitPoints -= attacker.stats.rangeDmg - defender.stats.armor;
+        } 
     }
     return hit;
 }
 
 function melee(attacker, defender) {
-    var meleeDiff = attacker.meleeAtk - defender.meleeAtk;
-    if ((attacker.meleeAtk  + meleeDiff - defender.defense) * 0.1 + Math.random() > 0.4) {
-        if (attacker.meleeDmg > defender.armor) defender.hitPoints -= attacker.meleeDmg - defender.armor;
+    var meleeDiff = attacker.stats.meleeAtk - defender.stats.meleeAtk;
+    if ((attacker.stats.meleeAtk  + meleeDiff - defender.stats.defense) * 0.1 + Math.random() > 0.5) {
+        if (attacker.stats.meleeDmg > defender.stats.armor) {
+            defender.hitPoints -= attacker.stats.meleeDmg - defender.stats.armor;
+        }
     }
-    if ((defender.meleeAtk - meleeDiff - attacker.defense) * 0.1 + Math.random() > 0.4) {
-        if (defender.meleeDmg > attacker.armor) attacker.hitPoints -= defender.meleeDmg - attacker.armor;
+    if ((defender.stats.meleeAtk - meleeDiff - attacker.stats.defense) * 0.1 + Math.random() > 0.4) {
+        if (defender.stats.meleeDmg > attacker.stats.armor) {
+            attacker.hitPoints -= defender.stats.meleeDmg - attacker.stats.armor;
+        } 
     }
 }
 
@@ -105,6 +111,7 @@ function ZeonMobileSuit(game, position, stats, icon, type) {
     this.game = game;
     this.position = position;
     this.stats = stats;
+    this.hitPoints = stats.hitPoints;
     this.icon = icon;
     this.type = type;
     this.lastShot = null;
@@ -138,7 +145,7 @@ ZeonMobileSuit.prototype.update = function() {
             // If the closest enemy is in range, shoot and advance toward them
             if (distance(this.position, closestEnemy.position) < this.stats.sightRadius) {
                 if (this.shotCooldown <= 0) {
-                    if (shoot(this.stats, closestEnemy.stats)) {
+                    if (shoot(this, closestEnemy)) {
                         this.lastShot = closestEnemy;
                         if (closestEnemy.stats.hitPoints <= 0) console.log(`${this.name} shot down ${closestEnemy.name}`);
                     }
@@ -171,7 +178,7 @@ ZeonMobileSuit.prototype.update = function() {
     for (var i = 0; i < this.game.fedForces.length; i++) {
         if(collision(this.position, this.game.fedForces[i].position) && !this.dead && !this.game.fedForces[i].dead) {
             // Melee attacks
-            melee(this.stats, this.game.fedForces[i].stats);
+            melee(this, this.game.fedForces[i]);
             if (this.game.fedForces[i].stats.hitPoints <= 0) console.log(`${this.name} destroyed ${this.game.fedForces[i].name} in close combat`);
             if (this.stats.hitPoints <=0) console.log(`${this.game.fedForces[i].name} destroyed ${this.name} in close combat`);
             // Bounce
@@ -217,6 +224,7 @@ function FederationMobileSuit(game, position, stats, icon, type) {
     this.game = game;
     this.position = position;
     this.stats = stats;
+    this.hitPoints = stats.hitPoints;
     this.icon = icon;
     this.type = type;
     this.lastShot = null;
@@ -256,7 +264,7 @@ FederationMobileSuit.prototype.update = function() {
             // If the closest enemy is in range, shoot at them
             } else if (distance(this.position, closestEnemy.position) < this.stats.sightRadius) {
                 if (this.shotCooldown <= 0) {
-                    if (shoot(this.stats, closestEnemy.stats)) {
+                    if (shoot(this, closestEnemy)) {
                         if (closestEnemy.stats.hitPoints <= 0) console.log(`${this.name} shot down ${closestEnemy.name}`);
                         this.lastShot = closestEnemy;
                     }
@@ -286,7 +294,7 @@ FederationMobileSuit.prototype.update = function() {
     for (var i = 0; i < this.game.zeonForces.length; i++) {
         if(collision(this.position, this.game.zeonForces[i].position) && !this.dead && !this.game.zeonForces[i].dead) {
             // Melee attacks
-            melee(this.stats, this.game.zeonForces[i].stats);
+            melee(this, this.game.zeonForces[i]);
             if (this.game.fedForces[i].stats.hitPoints <= 0) console.log(`${this.name} destroyed ${this.game.fedForces[i].name} in close combat`);
             if (this.stats.hitPoints <=0) console.log(`${this.game.fedForces[i].name} destroyed ${this.name} in close combat`);
             // Bounce
